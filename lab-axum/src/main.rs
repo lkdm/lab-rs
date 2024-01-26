@@ -59,19 +59,6 @@ pub async fn get_todos() -> axum::response::Html<String> {
     .into()
 }
 
-#[derive(Debug)]
-enum ApiError {
-    CouldNotCreate,
-}
-impl IntoResponse for ApiError {
-    fn into_response(self) -> Response {
-        let body = match self {
-            ApiError::CouldNotCreate => Json(json!({ "error": "Could not create todo" })),
-        };
-        (StatusCode::BAD_REQUEST, body).into_response()
-    }
-}
-
 #[axum::debug_handler]
 pub async fn post_todos(
     Json(todo): Json<TodoCreationDto>,
@@ -90,4 +77,26 @@ pub async fn post_todos(
         .ok_or_else(|| ApiError::CouldNotCreate)?;
 
     Ok::<StatusCode, ApiError>(StatusCode::CREATED)
+}
+
+impl IntoResponse for ApiError {
+    fn into_response(self) -> Response {
+        // Turns ApiError into a HTTP response.
+        let (status, error_message) = match self {
+            ApiError::InvalidUuid => (StatusCode::BAD_REQUEST, "Invalid UUID provided"),
+            ApiError::CouldNotCreate => {
+                (StatusCode::INTERNAL_SERVER_ERROR, "Could not create todo")
+            }
+        };
+        let body = Json(json!({
+            "error": error_message,
+        }));
+        (status, body).into_response()
+    }
+}
+
+#[derive(Debug)]
+enum ApiError {
+    InvalidUuid,
+    CouldNotCreate,
 }
