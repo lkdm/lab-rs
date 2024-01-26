@@ -1,6 +1,12 @@
+use axum::http::StatusCode;
+use axum::response::{IntoResponse, Response};
 use axum::routing::get;
+use axum::Json;
 use lab_axum::db::data::DATA;
+use lab_axum::model::todo::{Todo, TodoCreationDto};
+use serde_json::json;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use uuid::Uuid;
 
 /// Use Thread for spawning a thread e.g. to acquire our crate::DATA mutex lock.
 use std::thread;
@@ -15,10 +21,11 @@ async fn main() {
     let app = axum::Router::new()
         .fallback(fallback)
         .route("/", get(hello))
-        .route("/todos/", get(get_todos));
+        .route("/todos/", get(get_todos).post(post_todos));
 
     // Run our application as a hyper server on http://localhost:3000.
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    tracing::debug!("listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, app).await.unwrap();
 }
 
@@ -50,4 +57,37 @@ pub async fn get_todos() -> axum::response::Html<String> {
     .join()
     .unwrap()
     .into()
+}
+
+#[derive(Debug)]
+enum ApiError {
+    CouldNotCreate,
+}
+impl IntoResponse for ApiError {
+    fn into_response(self) -> Response {
+        let body = match self {
+            ApiError::CouldNotCreate => Json(json!({ "error": "Could not create todo" })),
+        };
+        (StatusCode::BAD_REQUEST, body).into_response()
+    }
+}
+
+#[axum::debug_handler]
+pub async fn post_todos(
+    Json(todo): Json<TodoCreationDto>,
+) -> Result<impl IntoResponse, impl IntoResponse> {
+    let id = Uuid::new_v4();
+    let mut data = DATA.lock().unwrap();
+    let new_todo = Todo {
+        id,
+        title: todo.title,
+        completed_at: None,
+        archived_at: None,
+    };
+    let _ = data
+        .todos
+        .insert(id, new_todo.clone())
+        .ok_or_else(|| ApiError::CouldNotCreate)?;
+
+    Ok::<StatusCode, ApiError>(StatusCode::CREATED)
 }
