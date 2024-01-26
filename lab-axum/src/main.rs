@@ -18,6 +18,8 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
+    // TODO: Create connection pool here, to pass into app.
+
     let app = axum::Router::new()
         .fallback(fallback)
         .route("/", get(hello))
@@ -38,13 +40,8 @@ pub async fn fallback(uri: axum::http::Uri) -> impl axum::response::IntoResponse
     )
 }
 
-/// axum handler for "GET /" which returns a string and causes axum to
-/// immediately respond with status code `200 OK` and with the string.
-pub async fn hello() -> String {
-    "Hello, World!".to_string()
-}
-
 pub async fn get_todos() -> axum::response::Html<String> {
+    // TODO: This does not need to be a thread
     thread::spawn(move || {
         let data = DATA.lock().unwrap();
         let mut todos: Vec<_> = data.todos.values().collect();
@@ -71,6 +68,7 @@ pub async fn post_todos(
         completed_at: None,
         archived_at: None,
     };
+    // TODO: This Hashmap will always return an error for some reason.
     let _ = data
         .todos
         .insert(id, new_todo.clone())
@@ -80,6 +78,7 @@ pub async fn post_todos(
 }
 
 impl IntoResponse for ApiError {
+    // Useful for turning our ApiError into a HTTP response.
     fn into_response(self) -> Response {
         // Turns ApiError into a HTTP response.
         let (status, error_message) = match self {
@@ -97,6 +96,7 @@ impl IntoResponse for ApiError {
 
 #[derive(Debug)]
 enum ApiError {
+    // A Custom Error type.
     InvalidUuid,
     CouldNotCreate,
 }
