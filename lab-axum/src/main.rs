@@ -22,7 +22,6 @@ async fn main() {
 
     let app = axum::Router::new()
         .fallback(fallback)
-        .route("/", get(hello))
         .route("/todos/", get(get_todos).post(post_todos));
 
     // Run our application as a hyper server on http://localhost:3000.
