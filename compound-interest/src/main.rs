@@ -1,39 +1,30 @@
-struct Money(isize);
-
-impl std::ops::Mul<isize> for Money {
-    type Output = Money;
-
-    fn mul(self, rhs: isize) -> Money {
-        Money(self.0 * rhs)
-    }
-}
-
-impl std::ops::Mul<Money> for Money {
-    type Output = Money;
-
-    fn mul(self, rhs: Money) -> Money {
-        // Create a new Money object with the result of the multiplication
-        Money(self.0 * rhs.0 / 100)
-    }
-}
-
-impl std::ops::Mul<f64> for Money {
-    type Output = Money;
-
-    fn mul(self, rhs: f64) -> Money {
-        Money((self.0 as f64 * rhs) as isize)
-    }
-}
-
-impl std::fmt::Display for Money {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let sign = if self.0 < 0 { "-" } else { "" };
-        let abs_value = self.0.abs();
-        write!(f, "{}{}.{}", sign, abs_value / 100, abs_value % 100)
-    }
-}
+#[macro_use]
+mod macros;
+use compound_interest::Currency;
+use rust_decimal_macros::dec;
 
 fn main() {
-    let total = Money(100) * Money(200) * -1.053;
-    println!("total: {}", total);
+    // let mut principle = Currency(dec!(41303.15)) * dec!(0.01);
+    // let mut principle = currency!(41303.15) * dec!(0.05);
+    // println!("{}", principle);
+    let mut p = currency!(51303.15);
+    let r = dec!(0.05) / dec!(12) + dec!(1);
+    let mut total_interest = currency!(0);
+    let monthly_deposit = currency!(4_000);
+
+    for month in 0..17 {
+        if month == 2 {
+            p -= currency!(20_000);
+        }
+        if month == 4 {
+            p -= currency!(10_000);
+        }
+        p += monthly_deposit;
+        let i = p * r - p;
+        total_interest += i;
+        p += i; // Add the interest to the principal for compounding
+    }
+
+    println!("Total Interest over 2 years: {}", total_interest);
+    println!("New principle: {}", p)
 }
