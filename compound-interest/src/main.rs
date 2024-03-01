@@ -1,24 +1,18 @@
-#[macro_use]
-mod macros;
-use compound_interest::Currency;
-use compound_interest::{AnnualFrequency, CompoundInterest, FinancialCalculator};
-use rust_decimal_macros::dec;
+// use compound_interest::{AnnualFrequency, CompoundInterest, FinancialCalculator, Money, Rational};
+// use rust_decimal::Decimal;
 
-fn main() {
-    let compound_interest = CompoundInterest::new(
-        currency!(50_000),
-        dec!(0.053),
-        currency!(1_000),
-        AnnualFrequency::Weekly,
-        AnnualFrequency::Monthly,
-        48,
-    );
-    let result = compound_interest.calculate().unwrap();
+// fn main() {
+//     let compound_interest = CompoundInterest::new(
+//         Money::from(Decimal::new(50_000_00, 2)),
+//         Rational::from(Decimal::new(0_053, 3)),
+//         Money::from(1_000),
+//         AnnualFrequency::Weekly,
+//         AnnualFrequency::Monthly,
+//         24,
+//     );
+//     let result = compound_interest.calculate().unwrap();
 
-    for (i, value) in result.iter().enumerate() {
-        println!("{}", value);
-    }
-
-    // println!("Total Interest over 2 years: {}", total_interest);
-    // println!("New principle: {}", p)
-}
+//     for (_, value) in result.iter().enumerate() {
+//         println!("{}", value);
+//     }
+// }
